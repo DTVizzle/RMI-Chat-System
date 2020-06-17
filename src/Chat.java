@@ -1,6 +1,7 @@
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -15,7 +16,7 @@ import java.rmi.server.UnicastRemoteObject;
 public class Chat extends UnicastRemoteObject implements ChatInterface {
 
     public String name;
-    public ChatInterface client;
+    public ArrayList<ChatInterface> clients;
     
     public Chat() throws RemoteException {
         this("");
@@ -23,21 +24,12 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
 
     public Chat(String name) throws RemoteException {
         this.name = name;
+        clients = new ArrayList<>();
     }
 
     @Override
     public String getName() throws RemoteException {
         return name;
-    }
-
-    @Override
-    public void setClient(ChatInterface client) {
-        this.client = client;
-    }
-
-    @Override
-    public ChatInterface getClient() {
-        return client;
     }
 
     @Override
@@ -48,5 +40,15 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
     @Override
     public void setName(String name) throws RemoteException {
         this.name = name;
+    }
+
+    @Override
+    public void addClient(ChatInterface client) throws RemoteException {
+        clients.add(client);
+    }
+
+    @Override
+    public ArrayList<ChatInterface> getClients() throws RemoteException {
+        return clients;
     }
 }

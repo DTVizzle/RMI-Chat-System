@@ -1,6 +1,7 @@
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -21,7 +22,7 @@ public interface ChatInterface extends Remote {
 
     public void send(String msg) throws RemoteException;
 
-    public void setClient(ChatInterface client) throws RemoteException;
+    public void addClient(ChatInterface client) throws RemoteException;
 
-    public ChatInterface getClient() throws RemoteException;
+    public ArrayList<ChatInterface> getClients() throws RemoteException;
 }

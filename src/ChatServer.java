@@ -1,7 +1,9 @@
 
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 /*
@@ -33,14 +35,14 @@ public class ChatServer {
 
             while (true) {
                 String msg = s.nextLine().trim();
-                if (server.getClient() != null) {
-                    ChatInterface client = server.getClient();
-                    msg = "[" + server.getName() + "] " + msg;
-                    client.send(msg);
+                ArrayList<ChatInterface> clients = server.getClients();
+                if (clients != null) {
+                    for (ChatInterface client : clients) {
+                        client.send("[" + server.getName() + "] " + msg);
+                    }
                 }
             }
-
-        } catch (Exception e) {
+        } catch (RemoteException e) {
             System.out.println("[system] Server failed: " + e);
         }
     }

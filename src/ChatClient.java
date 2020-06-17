@@ -1,4 +1,6 @@
 
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.Scanner;
@@ -30,7 +32,7 @@ public class ChatClient {
             String msg = "[" + client.getName() + "] got connected";
             server.send(msg);
             System.out.println("[System] Chat Remote Object is ready:");
-            server.setClient(client);
+            server.addClient(client);
 
             while (true) {
                 msg = s.nextLine().trim();
@@ -38,7 +40,7 @@ public class ChatClient {
                 server.send(msg);
             }
 
-        } catch (Exception e) {
+        } catch (NotBoundException | RemoteException e) {
             System.out.println("[System] Server failed: " + e);
         }
     }
