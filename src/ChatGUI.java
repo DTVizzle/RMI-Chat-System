@@ -18,6 +18,8 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
 /*
@@ -41,6 +43,8 @@ public class ChatGUI extends JPanel implements ActionListener {
 
     private JButton connectBtn, sendBttn;
     private JLabel statusLabel;
+    private JTextArea messageArea;
+    private JTextField messageField;
 
     public ChatGUI() {
         super(new BorderLayout());
@@ -49,6 +53,7 @@ public class ChatGUI extends JPanel implements ActionListener {
         JPanel formPanel = new JPanel(new GridLayout(0, 1));
         JLabel label;
         JPanel panel;
+        JScrollPane scrollPane;
 
         panel = new JPanel(new BorderLayout(6, 0));
         label = new JLabel("Host:");
@@ -78,6 +83,39 @@ public class ChatGUI extends JPanel implements ActionListener {
 
         ConnectionPanel.add(formPanel, BorderLayout.NORTH);
         add(ConnectionPanel, BorderLayout.WEST);
+
+        JPanel mainPanel = new JPanel(new BorderLayout());
+
+        messageArea = new JTextArea();
+        messageArea.setColumns(70);
+        messageArea.setRows(25);
+        messageArea.setEditable(false);
+        messageArea.setLineWrap(true);
+        messageArea.setWrapStyleWord(true);
+        messageArea.setFont(PRIMARY_FONT);
+        scrollPane = new JScrollPane(messageArea);
+        scrollPane.setHorizontalScrollBarPolicy(scrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
+
+        JPanel messagePanel = new JPanel();
+
+        messageField = new JTextField(30);
+        messageField.setEnabled(false);
+        messageField.setFont(PRIMARY_FONT);
+        scrollPane = new JScrollPane(messageField);
+        scrollPane.setHorizontalScrollBarPolicy(scrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+
+        messagePanel.add(scrollPane);
+
+        sendBttn = new JButton("Send");
+        sendBttn.setEnabled(false);
+        sendBttn.addActionListener(this);
+        messagePanel.add(sendBttn);
+
+        mainPanel.add(messagePanel, BorderLayout.SOUTH);
+
+        super.add(mainPanel, BorderLayout.CENTER);
     }
 
     private void displayMessage(String title, String str) {
@@ -108,9 +146,21 @@ public class ChatGUI extends JPanel implements ActionListener {
                     nameField.setEditable(false);
                     connectBtn.setEnabled(false);
                     statusLabel.setText("Connected");
+                    messageField.setEnabled(true);
+                    sendBttn.setEnabled(true);
                 } catch (NotBoundException | RemoteException ex) {
                     Logger.getLogger(ChatGUI.class.getName()).log(Level.SEVERE, null, ex);
                 }
+            }
+        } else if (src == sendBttn) {
+            try {
+                String msg = ": " + messageField.getText();
+                messageField.setText("");
+                sendBttn.setEnabled(false);
+                messageArea.append("You" + msg + "\n");
+                server.send(client.getName() + msg + "\n");
+            } catch (RemoteException ex) {
+                Logger.getLogger(ChatGUI.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
