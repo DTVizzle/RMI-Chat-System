@@ -4,7 +4,8 @@
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
             <file>file:/D:/projects/uni/DMS/DMS-ASS2/src/ChatServer.java</file>
-            <file>file:/D:/projects/uni/DMS/DMS-ASS2/src/ChatClient.java</file>
+            <file>file:/D:/projects/uni/DMS/DMS-ASS2/src/ChatInterface.java</file>
+            <file>file:/D:/projects/uni/DMS/DMS-ASS2/src/ChatGUI.java</file>
         </group>
     </open-files>
 </project-private>
