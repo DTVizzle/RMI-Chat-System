@@ -169,7 +169,7 @@ public class ChatGUI extends JPanel implements ActionListener {
             try {
                 String msg = ": " + messageField.getText();
                 messageField.setText("");
-                sendBttn.setEnabled(false);
+//                sendBttn.setEnabled(false);
                 messageArea.append("You" + msg + "\n");
 
                 if (!isLeader) {
@@ -191,22 +191,22 @@ public class ChatGUI extends JPanel implements ActionListener {
         Registry registry = LocateRegistry.getRegistry(url, Integer.parseInt(port));
         host = (ChatInterface) registry.lookup("chat");
 
-        String msg = "[" + client.getName() + "] successfuly connected";
+        String msg = "[" + client.getName() + "] successfuly connected\n";
         host.send(msg);
         host.addClient(client);
         System.out.println("Client is Ready!");
 
-        finishSetup(name, "Started");
+        finishSetup(name);
     }
 
-    private void finishSetup(String name, String status) {
+    private void finishSetup(String name) {
         frame.setTitle(name + "'s " + TITLE);
         urlField.setEditable(false);
         portField.setEditable(false);
         nameField.setEditable(false);
         connectBtn.setEnabled(false);
         startBtn.setEnabled(false);
-        statusLabel.setText(status);
+        statusLabel.setText("Conencted");
         messageField.setEnabled(true);
         sendBttn.setEnabled(true);
     }
@@ -225,7 +225,7 @@ public class ChatGUI extends JPanel implements ActionListener {
 
         host.setMessageArea(messageArea);
 
-        finishSetup(name, "Connected");
+        finishSetup(name);
     }
 
     public static void main(String[] args) {
