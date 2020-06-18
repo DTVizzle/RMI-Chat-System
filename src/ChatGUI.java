@@ -39,7 +39,7 @@ public class ChatGUI extends JPanel implements ActionListener {
     private static JFrame frame;
     private ChatInterface client, server;
 
-    private JTextField urlField, nameField;
+    private JTextField urlField, portField, nameField;
 
     private JButton connectBtn, sendBttn;
     private JLabel statusLabel;
@@ -56,15 +56,23 @@ public class ChatGUI extends JPanel implements ActionListener {
         JScrollPane scrollPane;
 
         panel = new JPanel(new BorderLayout(6, 0));
-        label = new JLabel("Host:");
+        label = new JLabel("Registry URL:");
         label.setFont(PRIMARY_FONT);
         panel.add(label, BorderLayout.WEST);
         urlField = new JTextField("localhost", 15);
         panel.add(urlField, BorderLayout.CENTER);
         formPanel.add(panel);
 
+        panel = new JPanel(new BorderLayout(6, 0));
+        label = new JLabel("Registry Port:");
+        label.setFont(PRIMARY_FONT);
+        panel.add(label, BorderLayout.WEST);
+        portField = new JTextField("1099", 15);
+        panel.add(portField, BorderLayout.CENTER);
+        formPanel.add(panel);
+
         panel = new JPanel(new BorderLayout(5, 0));
-        label = new JLabel("User:");
+        label = new JLabel("Name:");
         label.setFont(PRIMARY_FONT);
         panel.add(label, BorderLayout.WEST);
         nameField = new JTextField(15);
@@ -127,14 +135,15 @@ public class ChatGUI extends JPanel implements ActionListener {
         Object src = e.getSource();
         if (src == connectBtn) {
             String url = urlField.getText();
+            String port = portField.getText();
             String name = nameField.getText();
-            if ((url.equals("")) || (name.equals(""))) {
+            if ((url.equals("")) || (port.equals("")) || (name.equals(""))) {
                 displayMessage("Error", "Please fill in the fields");
             } else {
                 try {
                     client = new Chat(name);
                     client.setMessageArea(messageArea);
-                    Registry registry = LocateRegistry.getRegistry(url);
+                    Registry registry = LocateRegistry.getRegistry(url, Integer.parseInt(port));
                     server = (ChatInterface) registry.lookup("chat");
 
                     String msg = "[" + client.getName() + "] successfuly connected";
