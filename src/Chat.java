@@ -2,6 +2,7 @@
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
+import javax.swing.DefaultListModel;
 import javax.swing.JTextArea;
 
 /*
@@ -19,6 +20,7 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
     public ArrayList<ChatInterface> clients;
     private ArrayList<String> messages;
     private JTextArea messageArea;
+    private DefaultListModel clientsModel;
 
     public Chat() throws RemoteException {
         this("");
@@ -29,6 +31,7 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
         clients = new ArrayList<>();
         messages = new ArrayList<>();
         messageArea = null;
+        clientsModel = null;
     }
 
     @Override
@@ -53,6 +56,16 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
     @Override
     public void addClient(ChatInterface client) throws RemoteException {
         clients.add(client);
+        if (clientsModel != null) {
+            clientsModel.addElement(client.getName());
+        }
+        for (ChatInterface c : clients) {
+            if (!c.getName().equals(client.getName())) {
+                c.addClient(client);
+            } else {
+                System.out.println(client.getName());
+            }
+        }
     }
 
     @Override
@@ -60,8 +73,26 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
         return clients;
     }
 
-    @Override
     public void setMessageArea(JTextArea messageArea) throws RemoteException {
         this.messageArea = messageArea;
     }
+
+    @Override
+    public void setClientsArea(DefaultListModel clientsModel) throws RemoteException {
+        this.clientsModel = clientsModel;
+    }
+
+    @Override
+    public void getClientsFromHost(ChatInterface host) throws RemoteException {
+        if (host != null) {
+            clientsModel.clear();
+            clientsModel.addElement(host.getName());
+            for (ChatInterface client : host.getClients()) {
+                if (!client.getName().equalsIgnoreCase("log")) {
+                    clientsModel.addElement(client.getName());
+                }
+            }
+        }
+    }
+
 }

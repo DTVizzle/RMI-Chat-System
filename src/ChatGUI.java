@@ -14,14 +14,17 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -42,11 +45,12 @@ public class ChatGUI extends JPanel implements ActionListener {
     private boolean isLeader;
 
     private JTextField urlField, portField, nameField;
-
     private JButton connectBtn, startBtn, sendBttn;
     private JLabel statusLabel;
     private JTextArea messageArea;
     private JTextField messageField;
+    private DefaultListModel model;
+    private JList clients;
 
     public ChatGUI() {
         super(new BorderLayout());
@@ -98,6 +102,15 @@ public class ChatGUI extends JPanel implements ActionListener {
         formPanel.add(statusLabel);
 
         ConnectionPanel.add(formPanel, BorderLayout.NORTH);
+
+        model = new DefaultListModel();
+        clients = new JList(model);
+        clients.setFont(PRIMARY_FONT);
+        clients.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        scrollPane = new JScrollPane(clients);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+
+        ConnectionPanel.add(scrollPane, BorderLayout.CENTER);
         add(ConnectionPanel, BorderLayout.WEST);
 
         JPanel mainPanel = new JPanel(new BorderLayout());
@@ -151,6 +164,7 @@ public class ChatGUI extends JPanel implements ActionListener {
                 try {
                     startClient(url, port, name);
                 } catch (RemoteException | NotBoundException ex) {
+                    displayMessage("Connection Error", "Failed to connect to a host");
                     Logger.getLogger(ChatGUI.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
@@ -162,6 +176,7 @@ public class ChatGUI extends JPanel implements ActionListener {
                 try {
                     startHost(name);
                 } catch (RemoteException | NotBoundException ex) {
+                    displayMessage("Connection Error", "A host already exists");
                     Logger.getLogger(ChatGUI.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
@@ -188,12 +203,14 @@ public class ChatGUI extends JPanel implements ActionListener {
     private void startClient(String url, String port, String name) throws RemoteException, NotBoundException {
         client = new Chat(name);
         client.setMessageArea(messageArea);
+        client.setClientsArea(model);
         Registry registry = LocateRegistry.getRegistry(url, Integer.parseInt(port));
         host = (ChatInterface) registry.lookup("chat");
 
         String msg = "[" + client.getName() + "] successfuly connected\n";
         host.send(msg);
         host.addClient(client);
+        client.getClientsFromHost(host);
         System.out.println("Client is Ready!");
 
         finishSetup(name);
@@ -224,6 +241,9 @@ public class ChatGUI extends JPanel implements ActionListener {
         System.out.println("Host is ready!");
 
         host.setMessageArea(messageArea);
+        host.setClientsArea(model);
+
+        model.addElement("Log");
 
         finishSetup(name);
     }
