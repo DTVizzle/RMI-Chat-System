@@ -2,13 +2,13 @@
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
+import javax.swing.JTextArea;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 /**
  *
  * @author sinan
@@ -17,7 +17,9 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
 
     public String name;
     public ArrayList<ChatInterface> clients;
-    
+    private ArrayList<String> messages;
+    private JTextArea messageArea;
+
     public Chat() throws RemoteException {
         this("");
     }
@@ -25,6 +27,8 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
     public Chat(String name) throws RemoteException {
         this.name = name;
         clients = new ArrayList<>();
+        messages = new ArrayList<>();
+        messageArea = null;
     }
 
     @Override
@@ -34,7 +38,11 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
 
     @Override
     public void send(String s) throws RemoteException {
-        System.out.println(s);
+        if (messageArea == null) {
+            System.out.println(s);
+        } else {
+            messageArea.append(s);
+        }
     }
 
     @Override
@@ -50,5 +58,10 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
     @Override
     public ArrayList<ChatInterface> getClients() throws RemoteException {
         return clients;
+    }
+
+    @Override
+    public void setMessageArea(JTextArea messageArea) throws RemoteException {
+        this.messageArea = messageArea;
     }
 }

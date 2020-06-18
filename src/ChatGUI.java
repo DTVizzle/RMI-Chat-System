@@ -133,6 +133,7 @@ public class ChatGUI extends JPanel implements ActionListener {
             } else {
                 try {
                     client = new Chat(name);
+                    client.setMessageArea(messageArea);
                     Registry registry = LocateRegistry.getRegistry(url);
                     server = (ChatInterface) registry.lookup("chat");
 

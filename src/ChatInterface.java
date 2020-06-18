@@ -2,6 +2,7 @@
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import javax.swing.JTextArea;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -14,14 +15,14 @@ import java.util.ArrayList;
  */
 public interface ChatInterface extends Remote {
 
-    public static final String REMOTE_REFERENCE = "chat";
-
     public void setName(String name) throws RemoteException;
+    
+    public void setMessageArea(JTextArea messageArea) throws RemoteException;
 
     public String getName() throws RemoteException;
 
     public void send(String msg) throws RemoteException;
-
+    
     public void addClient(ChatInterface client) throws RemoteException;
 
     public ArrayList<ChatInterface> getClients() throws RemoteException;
