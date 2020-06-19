@@ -1,23 +1,23 @@
-
-import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayList;
-import java.util.Scanner;
-
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-/**
- *
- * @author sinan
- */
-public class ChatServer {
-
-    public static void main(String[] args) {
+//
+//import java.rmi.RemoteException;
+//import java.rmi.registry.LocateRegistry;
+//import java.rmi.registry.Registry;
+//import java.rmi.server.UnicastRemoteObject;
+//import java.util.ArrayList;
+//import java.util.Scanner;
+//
+///*
+// * To change this license header, choose License Headers in Project Properties.
+// * To change this template file, choose Tools | Templates
+// * and open the template in the editor.
+// */
+///**
+// *
+// * @author sinan
+// */
+//public class ChatServer {
+//
+//    public static void main(String[] args) {
 //        try {
 //            Scanner s = new Scanner(System.in);
 //            System.out.println("Enter Your name and press Enter:");
@@ -45,6 +45,6 @@ public class ChatServer {
 //        } catch (RemoteException e) {
 //            System.out.println("[system] Server failed: " + e);
 //        }
-    }
-
-}
+//    }
+//
+//}

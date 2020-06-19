@@ -24,14 +24,14 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
     private DefaultListModel clientsModel;
 
     public Chat() throws RemoteException {
-        this("");
+        this("", null, null);
     }
 
-    public Chat(String name) throws RemoteException {
+    public Chat(String name, JTextArea messageArea, DefaultListModel clientsModel) throws RemoteException {
         this.name = name;
+        this.messageArea = messageArea;
+        this. clientsModel = clientsModel;
         connectedClients = new HashMap<>();
-        messageArea = null;
-        clientsModel = null;
     }
 
     @Override
@@ -105,7 +105,6 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
     @Override
     public ChatInterface getClient(String name) throws RemoteException {
         for (ChatInterface c : connectedClients.keySet()) {
-            System.out.println(c.getName());
             if (c.getName().equals(name)) {
                 return c;
             }

@@ -45,8 +45,7 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
     private String recipient;
 
     private static JFrame frame;
-    private static ChatInterface client, host;
-    private boolean isLeader;
+    private static ChatInterface chatClient;
 
     private JTextField urlField, portField, nameField;
     private JButton connectBtn, startBtn, sendBttn;
@@ -59,8 +58,7 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
     public ChatGUI() {
         super(new BorderLayout());
         recipient = null;
-        isLeader = false;
-
+        
         JPanel ConnectionPanel = new JPanel(new BorderLayout());
         JPanel formPanel = new JPanel(new GridLayout(0, 1));
         JLabel label;
@@ -201,9 +199,9 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
 //                        client.send(host.getName() + msg);
 //                    }
 //                }
-                ChatInterface c = client.getClient(recipient);
+                ChatInterface c = chatClient.getClient(recipient);
                 System.out.println("Reciever: " + c);
-                c.send(client, msg);
+                c.send(chatClient, msg);
             } catch (RemoteException ex) {
                 Logger.getLogger(ChatGUI.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -211,41 +209,35 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
     }
 
     private void startClient(String url, String port, String name) throws RemoteException, NotBoundException {
-        client = new Chat(name);
-        client.setMessageArea(messageArea);
-        client.setClientsArea(clientsModel);
+        chatClient = new Chat(name, messageArea, clientsModel);
+        
         Registry registry = LocateRegistry.getRegistry(url, Integer.parseInt(port));
-        host = (ChatInterface) registry.lookup("chat");
+        ChatInterface host = (ChatInterface) registry.lookup("chat");
 
-        String msg = "[" + client.getName() + "] successfuly connected\n";
-        client.getClientsFromHost(host);
-        client.addClient(host);
-        host.addClient(client);
-        host.send(client, msg);
+        chatClient.addClient(host);
+        chatClient.getClientsFromHost(host);
+        host.addClient(chatClient);
+        
+        chatClient.send(host, "[" + chatClient.getName() + "] successfuly connected\n");
+        
         System.out.println("Client is Ready!");
 
         finishSetup(name);
     }
 
     private void startHost(String name, String port) throws RemoteException, NotBoundException {
-        isLeader = true;
-        host = new Chat(name);
+        chatClient = new Chat(name, messageArea, clientsModel);
 
 //        UnicastRemoteObject.unexportObject(host, true);
 //        ChatInterface stub = (ChatInterface) UnicastRemoteObject.exportObject(host, 0);
         // get the registry which is running on the default port 1099
         Registry registry = LocateRegistry.getRegistry(Integer.parseInt(port));
-        registry.rebind("chat", host);//binds if not already
-
-        System.out.println("Host is ready!");
-
-        host.setMessageArea(messageArea);
-        host.setClientsArea(clientsModel);
+        registry.rebind("chat", chatClient);//binds if not already
 
         finishSetup(name);
     }
 
-    private void finishSetup(String name) {
+    private void finishSetup(String name) throws RemoteException {        
         frame.setTitle(name + "'s " + TITLE);
         urlField.setEditable(false);
         portField.setEditable(false);
@@ -271,10 +263,10 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
 
         ArrayList<String> messages;
         try {
-            if (client == null) {
-                messages = host.getMessages(recipient);
+            if (chatClient == null) {
+                messages = chatClient.getMessages(recipient);
             } else {
-                messages = client.getMessages(recipient);
+                messages = chatClient.getMessages(recipient);
             }
 
             if (messages != null) {
