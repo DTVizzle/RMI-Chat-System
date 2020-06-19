@@ -11,17 +11,22 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -32,26 +37,28 @@ import javax.swing.JTextField;
  *
  * @author sinan
  */
-public class ChatGUI extends JPanel implements ActionListener {
+public class ChatGUI extends JPanel implements ActionListener, ListSelectionListener {
 
     private static final String TITLE = "Chat Box";
     private static final Font PRIMARY_FONT = new Font("Arial", Font.BOLD, 15);
 
+    private String recipient;
+
     private static JFrame frame;
-    private ChatInterface client, host;
-    private boolean isLeader;
+    private static ChatInterface chatClient;
 
     private JTextField urlField, portField, nameField;
-
     private JButton connectBtn, startBtn, sendBttn;
     private JLabel statusLabel;
     private JTextArea messageArea;
     private JTextField messageField;
+    private DefaultListModel clientsModel;
+    private JList clients;
 
     public ChatGUI() {
         super(new BorderLayout());
-        isLeader = false;
-
+        recipient = null;
+        
         JPanel ConnectionPanel = new JPanel(new BorderLayout());
         JPanel formPanel = new JPanel(new GridLayout(0, 1));
         JLabel label;
@@ -98,6 +105,16 @@ public class ChatGUI extends JPanel implements ActionListener {
         formPanel.add(statusLabel);
 
         ConnectionPanel.add(formPanel, BorderLayout.NORTH);
+
+        clientsModel = new DefaultListModel();
+        clients = new JList(clientsModel);
+        clients.setFont(PRIMARY_FONT);
+        clients.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        clients.addListSelectionListener(this);
+        scrollPane = new JScrollPane(clients);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+
+        ConnectionPanel.add(scrollPane, BorderLayout.CENTER);
         add(ConnectionPanel, BorderLayout.WEST);
 
         JPanel mainPanel = new JPanel(new BorderLayout());
@@ -151,34 +168,31 @@ public class ChatGUI extends JPanel implements ActionListener {
                 try {
                     startClient(url, port, name);
                 } catch (RemoteException | NotBoundException ex) {
+                    displayMessage("Connection Error", "Failed to connect to a host");
                     Logger.getLogger(ChatGUI.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         } else if (src == startBtn) {
             String name = nameField.getText();
-            if (name.equals("")) {
+            String port = portField.getText();
+            if (name.equals("") || port.equals("")) {
                 displayMessage("Error", "Please fill in the fields");
             } else {
                 try {
-                    startHost(name);
+                    startHost(name, port);
                 } catch (RemoteException | NotBoundException ex) {
+                    displayMessage("Connection Error", "Error initializing host");
                     Logger.getLogger(ChatGUI.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         } else if (src == sendBttn) {
             try {
-                String msg = ": " + messageField.getText();
+                String msg = ": " + messageField.getText() + "\n";
                 messageField.setText("");
-//                sendBttn.setEnabled(false);
-                messageArea.append("You" + msg + "\n");
-
-                if (!isLeader) {
-                    host.send(client.getName() + msg + "\n");
-                } else {
-                    for (ChatInterface client : host.getClients()) {
-                        client.send(host.getName() + msg);
-                    }
-                }
+                messageArea.append("You" + msg);
+                
+                ChatInterface c = chatClient.getClient(recipient);
+                c.send(chatClient, msg);
             } catch (RemoteException ex) {
                 Logger.getLogger(ChatGUI.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -186,20 +200,35 @@ public class ChatGUI extends JPanel implements ActionListener {
     }
 
     private void startClient(String url, String port, String name) throws RemoteException, NotBoundException {
-        client = new Chat(name);
-        client.setMessageArea(messageArea);
+        chatClient = new Chat(name, messageArea, clientsModel);
+        
         Registry registry = LocateRegistry.getRegistry(url, Integer.parseInt(port));
-        host = (ChatInterface) registry.lookup("chat");
+        ChatInterface host = (ChatInterface) registry.lookup("chat");
 
-        String msg = "[" + client.getName() + "] successfuly connected\n";
-        host.send(msg);
-        host.addClient(client);
+        chatClient.addClient(host);
+        chatClient.getClientsFromHost(host);
+        host.addClient(chatClient);
+        
+        chatClient.send(host, "[" + chatClient.getName() + "] successfuly connected\n");
+        
         System.out.println("Client is Ready!");
 
         finishSetup(name);
     }
 
-    private void finishSetup(String name) {
+    private void startHost(String name, String port) throws RemoteException, NotBoundException {
+        chatClient = new Chat(name, messageArea, clientsModel);
+
+//        UnicastRemoteObject.unexportObject(host, true);
+//        ChatInterface stub = (ChatInterface) UnicastRemoteObject.exportObject(host, 0);
+        // get the registry which is running on the default port 1099
+        Registry registry = LocateRegistry.getRegistry(Integer.parseInt(port));
+        registry.rebind("chat", chatClient);//binds if not already
+
+        finishSetup(name);
+    }
+
+    private void finishSetup(String name) throws RemoteException {        
         frame.setTitle(name + "'s " + TITLE);
         urlField.setEditable(false);
         portField.setEditable(false);
@@ -211,21 +240,34 @@ public class ChatGUI extends JPanel implements ActionListener {
         sendBttn.setEnabled(true);
     }
 
-    private void startHost(String name) throws RemoteException, NotBoundException {
-        isLeader = true;
-        host = new Chat(name);
+    @Override
+    public void valueChanged(ListSelectionEvent e) {
+        recipient = (String) clients.getSelectedValue();
+        if (recipient != null) {
+            messageField.setEnabled(true);
+//            sendBttn.setEnabled(false);
+        } else {
+            sendBttn.setEnabled(false);
+            messageField.setEnabled(false);
+        }
+        messageArea.setText("");
 
-        UnicastRemoteObject.unexportObject(host, true);
-        ChatInterface stub = (ChatInterface) UnicastRemoteObject.exportObject(host, 0);
-        // get the registry which is running on the default port 1099
-        Registry registry = LocateRegistry.getRegistry();
-        registry.rebind("chat", stub);//binds if not already
+        ArrayList<String> messages;
+        try {
+            if (chatClient == null) {
+                messages = chatClient.getMessages(recipient);
+            } else {
+                messages = chatClient.getMessages(recipient);
+            }
 
-        System.out.println("Host is ready!");
-
-        host.setMessageArea(messageArea);
-
-        finishSetup(name);
+            if (messages != null) {
+                for (String msg : messages) {
+                    messageArea.append(msg);
+                }
+            }
+        } catch (RemoteException ex) {
+            Logger.getLogger(ChatGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     public static void main(String[] args) {
@@ -243,5 +285,4 @@ public class ChatGUI extends JPanel implements ActionListener {
                 (screenDimension.height - frameDimension.height) / 2);
         frame.setVisible(true);
     }
-
 }
