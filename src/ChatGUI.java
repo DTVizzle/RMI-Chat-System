@@ -187,20 +187,11 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
             }
         } else if (src == sendBttn) {
             try {
-                String msg = ": " + messageField.getText();
+                String msg = ": " + messageField.getText() + "\n";
                 messageField.setText("");
-//                sendBttn.setEnabled(false);
-                messageArea.append("You" + msg + "\n");
-
-//                if (!isLeader) {
-//                    host.send(client.getName() + msg + "\n");
-//                } else {
-//                    for (ChatInterface client : host.getClients()) {
-//                        client.send(host.getName() + msg);
-//                    }
-//                }
+                messageArea.append("You" + msg);
+                
                 ChatInterface c = chatClient.getClient(recipient);
-                System.out.println("Reciever: " + c);
                 c.send(chatClient, msg);
             } catch (RemoteException ex) {
                 Logger.getLogger(ChatGUI.class.getName()).log(Level.SEVERE, null, ex);
