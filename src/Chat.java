@@ -19,8 +19,6 @@ import javax.swing.JTextArea;
  *
  * @author sinan
  */
-
-
 public class Chat extends UnicastRemoteObject implements ChatInterface {
 
     public String name;
@@ -60,12 +58,14 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
 
     @Override
     public void addClient(ChatInterface client) throws RemoteException {
-        for (ChatInterface c : getClients()) {
-            c.addClient(client);
-        }
         connectedClients.put(client, new ArrayList<>(50));
         if (clientsModel != null) {
-            clientsModel.addElement(client);
+            clientsModel.addElement(client.getName());
+        }
+        for (ChatInterface c : getClients()) {
+            if (!c.getName().equals(client.getName())) {
+                c.addClient(client);
+            }
         }
     }
 
@@ -94,11 +94,9 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
         if (host != null) {
             clientsModel.clear();
             clientsModel.addElement(host.getName());
-            for (ChatInterface client : host.getClients()) {
-                if (!client.getName().equalsIgnoreCase("log")) {
-                    clientsModel.addElement(client.getName());
-                }
-            }
+//            for (ChatInterface client : host.getClients()) {
+//                clientsModel.addElement(client.getName());
+//            }
         }
     }
 
