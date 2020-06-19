@@ -19,6 +19,8 @@ import javax.swing.JTextArea;
  *
  * @author sinan
  */
+
+
 public class Chat extends UnicastRemoteObject implements ChatInterface {
 
     public String name;
@@ -109,5 +111,4 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
             return null;
         }
     }
-
 }

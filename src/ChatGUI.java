@@ -152,55 +152,7 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
     private void displayMessage(String title, String str) {
         JOptionPane.showMessageDialog(new Frame(title), str);
     }
-
-    private void startClient(String url, String port, String name) throws RemoteException, NotBoundException {
-        client = new Chat(name);
-        client.setMessageArea(messageArea);
-        client.setClientsArea(clientsModel);
-        Registry registry = LocateRegistry.getRegistry(url, Integer.parseInt(port));
-        host = (ChatInterface) registry.lookup("chat");
-
-        String msg = "[" + client.getName() + "] successfuly connected\n";
-        host.send(msg);
-        host.addClient(client);
-        client.getClientsFromHost(host);
-        System.out.println("Client is Ready!");
-
-        finishSetup(name);
-    }
-
-    private void startHost(String name) throws RemoteException, NotBoundException {
-        isLeader = true;
-        host = new Chat(name);
-
-        UnicastRemoteObject.unexportObject(host, true);
-        ChatInterface stub = (ChatInterface) UnicastRemoteObject.exportObject(host, 0);
-        // get the registry which is running on the default port 1099
-        Registry registry = LocateRegistry.getRegistry();
-        registry.rebind("chat", stub);//binds if not already
-
-        System.out.println("Host is ready!");
-
-        host.setMessageArea(messageArea);
-        host.setClientsArea(clientsModel);
-
-        clientsModel.addElement("Log");
-
-        finishSetup(name);
-    }
-
-    private void finishSetup(String name) {
-        frame.setTitle(name + "'s " + TITLE);
-        urlField.setEditable(false);
-        portField.setEditable(false);
-        nameField.setEditable(false);
-        connectBtn.setEnabled(false);
-        startBtn.setEnabled(false);
-        statusLabel.setText("Conencted");
-        messageField.setEnabled(true);
-        sendBttn.setEnabled(true);
-    }
-
+    
     @Override
     public void actionPerformed(ActionEvent e) {
         Object src = e.getSource();
@@ -248,6 +200,52 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
                 Logger.getLogger(ChatGUI.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
+    }
+
+    private void startClient(String url, String port, String name) throws RemoteException, NotBoundException {
+        client = new Chat(name);
+        client.setMessageArea(messageArea);
+        client.setClientsArea(clientsModel);
+        Registry registry = LocateRegistry.getRegistry(url, Integer.parseInt(port));
+        host = (ChatInterface) registry.lookup("chat");
+
+        String msg = "[" + client.getName() + "] successfuly connected\n";
+        host.send(msg);
+        host.addClient(client);
+        client.getClientsFromHost(host);
+        System.out.println("Client is Ready!");
+
+        finishSetup(name);
+    }
+
+    private void startHost(String name) throws RemoteException, NotBoundException {
+        isLeader = true;
+        host = new Chat(name);
+
+        UnicastRemoteObject.unexportObject(host, true);
+        ChatInterface stub = (ChatInterface) UnicastRemoteObject.exportObject(host, 0);
+        // get the registry which is running on the default port 1099
+        Registry registry = LocateRegistry.getRegistry();
+        registry.rebind("chat", stub);//binds if not already
+
+        System.out.println("Host is ready!");
+
+        host.setMessageArea(messageArea);
+        host.setClientsArea(clientsModel);
+
+        finishSetup(name);
+    }
+
+    private void finishSetup(String name) {
+        frame.setTitle(name + "'s " + TITLE);
+        urlField.setEditable(false);
+        portField.setEditable(false);
+        nameField.setEditable(false);
+        connectBtn.setEnabled(false);
+        startBtn.setEnabled(false);
+        statusLabel.setText("Conencted");
+        messageField.setEnabled(true);
+        sendBttn.setEnabled(true);
     }
 
     @Override
