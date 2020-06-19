@@ -11,6 +11,7 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.DefaultListModel;
@@ -41,8 +42,10 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
     private static final String TITLE = "Chat Box";
     private static final Font PRIMARY_FONT = new Font("Arial", Font.BOLD, 15);
 
+    private String recipient;
+
     private static JFrame frame;
-    private static ChatInterface client, host, recipient;
+    private static ChatInterface client, host;
     private boolean isLeader;
 
     private JTextField urlField, portField, nameField;
@@ -55,6 +58,7 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
 
     public ChatGUI() {
         super(new BorderLayout());
+        recipient = null;
         isLeader = false;
 
         JPanel ConnectionPanel = new JPanel(new BorderLayout());
@@ -190,13 +194,16 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
 //                sendBttn.setEnabled(false);
                 messageArea.append("You" + msg + "\n");
 
-                if (!isLeader) {
-                    host.send(client.getName() + msg + "\n");
-                } else {
-                    for (ChatInterface client : host.getClients()) {
-                        client.send(host.getName() + msg);
-                    }
-                }
+//                if (!isLeader) {
+//                    host.send(client.getName() + msg + "\n");
+//                } else {
+//                    for (ChatInterface client : host.getClients()) {
+//                        client.send(host.getName() + msg);
+//                    }
+//                }
+                ChatInterface c = client.getClient(recipient);
+                System.out.println("Reciever: " + c);
+                c.send(client, msg);
             } catch (RemoteException ex) {
                 Logger.getLogger(ChatGUI.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -211,9 +218,10 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
         host = (ChatInterface) registry.lookup("chat");
 
         String msg = "[" + client.getName() + "] successfuly connected\n";
-        host.send(msg);
         client.getClientsFromHost(host);
+        client.addClient(host);
         host.addClient(client);
+        host.send(client, msg);
         System.out.println("Client is Ready!");
 
         finishSetup(name);
@@ -251,15 +259,32 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
 
     @Override
     public void valueChanged(ListSelectionEvent e) {
-        recipient = (ChatInterface) clients.getSelectedValue();
+        recipient = (String) clients.getSelectedValue();
         if (recipient != null) {
             messageField.setEnabled(true);
-            sendBttn.setEnabled(false);
+//            sendBttn.setEnabled(false);
         } else {
             sendBttn.setEnabled(false);
             messageField.setEnabled(false);
         }
         messageArea.setText("");
+
+        ArrayList<String> messages;
+        try {
+            if (client == null) {
+                messages = host.getMessages(recipient);
+            } else {
+                messages = client.getMessages(recipient);
+            }
+
+            if (messages != null) {
+                for (String msg : messages) {
+                    messageArea.append(msg);
+                }
+            }
+        } catch (RemoteException ex) {
+            Logger.getLogger(ChatGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     public static void main(String[] args) {

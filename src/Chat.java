@@ -4,9 +4,6 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.DefaultListModel;
 import javax.swing.JTextArea;
 
@@ -43,11 +40,15 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
     }
 
     @Override
-    public void send(String msg) throws RemoteException {
+    public void send(ChatInterface sender, String msg) throws RemoteException {
+        msg = sender.getName() + msg;
         if (messageArea == null) {
             System.out.println(msg);
         } else {
             messageArea.append(msg);
+        }
+        if (sender != null) {
+            connectedClients.get(sender).add(msg);
         }
     }
 
@@ -75,8 +76,8 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
     }
 
     @Override
-    public ArrayList<String> getMessages(ChatInterface client) throws RemoteException {
-        return connectedClients.get(client);
+    public ArrayList<String> getMessages(String name) throws RemoteException {
+        return connectedClients.get(getClient(name));
     }
 
     @Override
@@ -92,7 +93,6 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
     @Override
     public void getClientsFromHost(ChatInterface host) throws RemoteException {
         if ((host != null) && (clientsModel != null)) {
-            clientsModel.addElement(host.getName());
             ArrayList<ChatInterface> clients = host.getClients();
             if (!clients.isEmpty()) {
                 for (ChatInterface client : host.getClients()) {
@@ -100,5 +100,16 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
                 }
             }
         }
+    }
+
+    @Override
+    public ChatInterface getClient(String name) throws RemoteException {
+        for (ChatInterface c : connectedClients.keySet()) {
+            System.out.println(c.getName());
+            if (c.getName().equals(name)) {
+                return c;
+            }
+        }
+        return null;
     }
 }
