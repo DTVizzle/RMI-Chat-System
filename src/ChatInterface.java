@@ -2,6 +2,7 @@
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Set;
 import javax.swing.DefaultListModel;
 import javax.swing.JTextArea;
 
@@ -28,7 +29,9 @@ public interface ChatInterface extends Remote {
     
     public void addClient(ChatInterface client) throws RemoteException;
 
-    public ArrayList<ChatInterface> getClients() throws RemoteException;
+    public Set<ChatInterface> getClients() throws RemoteException;
+    
+    public ArrayList<String> getMessages(ChatInterface client) throws RemoteException;
     
     public void getClientsFromHost(ChatInterface host) throws RemoteException;
 }

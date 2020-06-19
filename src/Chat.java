@@ -2,6 +2,11 @@
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.DefaultListModel;
 import javax.swing.JTextArea;
 
@@ -17,8 +22,7 @@ import javax.swing.JTextArea;
 public class Chat extends UnicastRemoteObject implements ChatInterface {
 
     public String name;
-    public ArrayList<ChatInterface> clients;
-    private ArrayList<String> messages;
+    private Map<ChatInterface, ArrayList<String>> connectedClients;
     private JTextArea messageArea;
     private DefaultListModel clientsModel;
 
@@ -28,8 +32,7 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
 
     public Chat(String name) throws RemoteException {
         this.name = name;
-        clients = new ArrayList<>();
-        messages = new ArrayList<>();
+        connectedClients = new HashMap<>();
         messageArea = null;
         clientsModel = null;
     }
@@ -40,11 +43,11 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
     }
 
     @Override
-    public void send(String s) throws RemoteException {
+    public void send(String msg) throws RemoteException {
         if (messageArea == null) {
-            System.out.println(s);
+            System.out.println(msg);
         } else {
-            messageArea.append(s);
+            messageArea.append(msg);
         }
     }
 
@@ -55,24 +58,26 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
 
     @Override
     public void addClient(ChatInterface client) throws RemoteException {
-        clients.add(client);
-        if (clientsModel != null) {
-            clientsModel.addElement(client.getName());
+        for (ChatInterface c : getClients()) {
+            c.addClient(client);
         }
-        for (ChatInterface c : clients) {
-            if (!c.getName().equals(client.getName())) {
-                c.addClient(client);
-            } else {
-                System.out.println(client.getName());
-            }
+        connectedClients.put(client, new ArrayList<>(50));
+        if (clientsModel != null) {
+            clientsModel.addElement(client);
         }
     }
 
     @Override
-    public ArrayList<ChatInterface> getClients() throws RemoteException {
-        return clients;
+    public Set<ChatInterface> getClients() throws RemoteException {
+        return connectedClients.keySet();
     }
 
+    @Override
+    public ArrayList<String> getMessages(ChatInterface client) throws RemoteException {
+        return connectedClients.get(client);
+    }
+
+    @Override
     public void setMessageArea(JTextArea messageArea) throws RemoteException {
         this.messageArea = messageArea;
     }
@@ -92,6 +97,16 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
                     clientsModel.addElement(client.getName());
                 }
             }
+        }
+    }
+
+    @Override
+    public String toString() {
+        try {
+            return getName();
+        } catch (RemoteException ex) {
+            Logger.getLogger(Chat.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
         }
     }
 
