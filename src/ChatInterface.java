@@ -29,7 +29,7 @@ public interface ChatInterface extends Remote {
     
     public void addClient(ChatInterface client) throws RemoteException;
 
-    public Set<ChatInterface> getClients() throws RemoteException;
+    public ArrayList<ChatInterface> getClients() throws RemoteException;
     
     public ArrayList<String> getMessages(ChatInterface client) throws RemoteException;
     

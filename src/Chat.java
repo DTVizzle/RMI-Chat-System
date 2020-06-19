@@ -70,8 +70,8 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
     }
 
     @Override
-    public Set<ChatInterface> getClients() throws RemoteException {
-        return connectedClients.keySet();
+    public ArrayList<ChatInterface> getClients() throws RemoteException {
+        return new ArrayList(connectedClients.keySet());
     }
 
     @Override
@@ -91,22 +91,14 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
 
     @Override
     public void getClientsFromHost(ChatInterface host) throws RemoteException {
-        if (host != null) {
-            clientsModel.clear();
+        if ((host != null) && (clientsModel != null)) {
             clientsModel.addElement(host.getName());
-//            for (ChatInterface client : host.getClients()) {
-//                clientsModel.addElement(client.getName());
-//            }
-        }
-    }
-
-    @Override
-    public String toString() {
-        try {
-            return getName();
-        } catch (RemoteException ex) {
-            Logger.getLogger(Chat.class.getName()).log(Level.SEVERE, null, ex);
-            return null;
+            ArrayList<ChatInterface> clients = host.getClients();
+            if (!clients.isEmpty()) {
+                for (ChatInterface client : host.getClients()) {
+                    addClient(client);
+                }
+            }
         }
     }
 }
