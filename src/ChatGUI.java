@@ -7,6 +7,9 @@ import java.awt.GridLayout;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.rmi.NoSuchObjectException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -43,7 +46,7 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
     private static final Font PRIMARY_FONT = new Font("Arial", Font.BOLD, 15);
 
     private static JFrame frame;
-    private ChatInterface client, host;
+    private static ChatInterface client, host;
     private boolean isLeader;
 
     private JTextField urlField, portField, nameField;
@@ -152,7 +155,7 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
     private void displayMessage(String title, String str) {
         JOptionPane.showMessageDialog(new Frame(title), str);
     }
-    
+
     @Override
     public void actionPerformed(ActionEvent e) {
         Object src = e.getSource();
@@ -172,11 +175,12 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
             }
         } else if (src == startBtn) {
             String name = nameField.getText();
-            if (name.equals("")) {
+            String port = portField.getText();
+            if (name.equals("") || port.equals("")) {
                 displayMessage("Error", "Please fill in the fields");
             } else {
                 try {
-                    startHost(name);
+                    startHost(name, port);
                 } catch (RemoteException | NotBoundException ex) {
                     displayMessage("Connection Error", "A host already exists");
                     Logger.getLogger(ChatGUI.class.getName()).log(Level.SEVERE, null, ex);
@@ -218,15 +222,15 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
         finishSetup(name);
     }
 
-    private void startHost(String name) throws RemoteException, NotBoundException {
+    private void startHost(String name, String port) throws RemoteException, NotBoundException {
         isLeader = true;
         host = new Chat(name);
 
-        UnicastRemoteObject.unexportObject(host, true);
-        ChatInterface stub = (ChatInterface) UnicastRemoteObject.exportObject(host, 0);
+//        UnicastRemoteObject.unexportObject(host, true);
+//        ChatInterface stub = (ChatInterface) UnicastRemoteObject.exportObject(host, 0);
         // get the registry which is running on the default port 1099
-        Registry registry = LocateRegistry.getRegistry();
-        registry.rebind("chat", stub);//binds if not already
+        Registry registry = LocateRegistry.getRegistry(Integer.parseInt(port));
+        registry.rebind("chat", host);//binds if not already
 
         System.out.println("Host is ready!");
 
