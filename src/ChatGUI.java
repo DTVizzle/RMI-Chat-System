@@ -7,6 +7,10 @@ import java.awt.GridLayout;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.rmi.AccessException;
+import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -54,6 +58,8 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
     private JTextField messageField;
     private DefaultListModel clientsModel;
     private JList clients;
+
+    private static Registry registry;
 
     public ChatGUI() {
         super(new BorderLayout());
@@ -202,6 +208,7 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
     private void startClient(String url, String port, String name) throws RemoteException, NotBoundException {
         chatClient = new Chat(name, messageArea, clientsModel);
 
+        registry = null;
         Registry registry = LocateRegistry.getRegistry(url, Integer.parseInt(port));
         ChatInterface host = (ChatInterface) registry.lookup("chat");
 
@@ -220,10 +227,15 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
 //        UnicastRemoteObject.unexportObject(host, true);
 //        ChatInterface stub = (ChatInterface) UnicastRemoteObject.exportObject(host, 0);
         // get the registry which is running on the default port 1099
-        Registry registry = LocateRegistry.getRegistry(Integer.parseInt(port));
-        registry.rebind("chat", chatClient);//binds if not already
+        registry = LocateRegistry.getRegistry(Integer.parseInt(port));
+        try {
+            registry.bind("chat", chatClient);//binds if not already
+            finishSetup(name);
+        } catch (AlreadyBoundException | AccessException ex) {
+            displayMessage("Error", "Another client is already hosting");
+            Logger.getLogger(ChatGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
-        finishSetup(name);
     }
 
     private void finishSetup(String name) throws RemoteException {
@@ -284,5 +296,17 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
         frame.setLocation((screenDimension.width - frameDimension.width) / 2,
                 (screenDimension.height - frameDimension.height) / 2);
         frame.setVisible(true);
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                if (registry != null) {
+                    try {
+                        registry.unbind("chat");
+                    } catch (RemoteException | NotBoundException ex) {
+                        Logger.getLogger(ChatGUI.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            }
+        });
     }
 }
