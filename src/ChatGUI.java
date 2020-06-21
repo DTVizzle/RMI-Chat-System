@@ -209,8 +209,6 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
         chatClient.getClientsFromHost(host);
         host.addClient(chatClient);
 
-        chatClient.send(host, "[" + chatClient.getName() + "] successfuly connected\n");
-
         System.out.println("Client is Ready!");
 
         finishSetup(name);

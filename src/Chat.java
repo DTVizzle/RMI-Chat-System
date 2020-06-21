@@ -47,7 +47,9 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
         if (messageArea == null) {
             System.out.println(msg);
         } else {
-            messageArea.append(msg);
+            if (getSelectedClient() != null && getSelectedClient().equals(sender)) {
+                messageArea.append(msg);
+            }
         }
         if (sender != null) {
             connectedClients.get(sender).add(msg);
