@@ -58,7 +58,7 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
     public ChatGUI() {
         super(new BorderLayout());
         recipient = null;
-        
+
         JPanel ConnectionPanel = new JPanel(new BorderLayout());
         JPanel formPanel = new JPanel(new GridLayout(0, 1));
         JLabel label;
@@ -190,8 +190,8 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
                 String msg = ": " + messageField.getText() + "\n";
                 messageField.setText("");
                 messageArea.append("You" + msg);
-                
-                ChatInterface c = chatClient.getClient(recipient);
+
+                ChatInterface c = chatClient.getSelectedClient();
                 c.send(chatClient, msg);
             } catch (RemoteException ex) {
                 Logger.getLogger(ChatGUI.class.getName()).log(Level.SEVERE, null, ex);
@@ -201,16 +201,16 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
 
     private void startClient(String url, String port, String name) throws RemoteException, NotBoundException {
         chatClient = new Chat(name, messageArea, clientsModel);
-        
+
         Registry registry = LocateRegistry.getRegistry(url, Integer.parseInt(port));
         ChatInterface host = (ChatInterface) registry.lookup("chat");
 
         chatClient.addClient(host);
         chatClient.getClientsFromHost(host);
         host.addClient(chatClient);
-        
+
         chatClient.send(host, "[" + chatClient.getName() + "] successfuly connected\n");
-        
+
         System.out.println("Client is Ready!");
 
         finishSetup(name);
@@ -228,7 +228,7 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
         finishSetup(name);
     }
 
-    private void finishSetup(String name) throws RemoteException {        
+    private void finishSetup(String name) throws RemoteException {
         frame.setTitle(name + "'s " + TITLE);
         urlField.setEditable(false);
         portField.setEditable(false);
@@ -242,18 +242,20 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
 
     @Override
     public void valueChanged(ListSelectionEvent e) {
-        recipient = (String) clients.getSelectedValue();
-        if (recipient != null) {
-            messageField.setEnabled(true);
-//            sendBttn.setEnabled(false);
-        } else {
-            sendBttn.setEnabled(false);
-            messageField.setEnabled(false);
-        }
-        messageArea.setText("");
-
-        ArrayList<String> messages;
         try {
+            recipient = (String) clients.getSelectedValue();
+            if (recipient != null) {
+                messageField.setEnabled(true);
+//            sendBttn.setEnabled(false);
+            } else {
+                sendBttn.setEnabled(false);
+                messageField.setEnabled(false);
+            }
+            messageArea.setText("");
+
+            chatClient.setSelectedClient(chatClient.getClient(recipient));
+
+            ArrayList<String> messages;
             if (chatClient == null) {
                 messages = chatClient.getMessages(recipient);
             } else {
