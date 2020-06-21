@@ -22,6 +22,7 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
     private Map<ChatInterface, ArrayList<String>> connectedClients;
     private JTextArea messageArea;
     private DefaultListModel clientsModel;
+    private ChatInterface selectedClient;
 
     public Chat() throws RemoteException {
         this("", null, null);
@@ -32,6 +33,7 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
         this.messageArea = messageArea;
         this.clientsModel = clientsModel;
         connectedClients = new HashMap<>();
+        selectedClient = null;
     }
 
     @Override
@@ -112,5 +114,15 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
             }
         }
         return null;
+    }
+
+    @Override
+    public void setSelectedClient(ChatInterface client) throws RemoteException {
+        selectedClient = client;
+    }
+
+    @Override
+    public ChatInterface getSelectedClient() throws RemoteException {
+        return selectedClient;
     }
 }

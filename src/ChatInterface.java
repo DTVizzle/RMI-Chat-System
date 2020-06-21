@@ -35,4 +35,8 @@ public interface ChatInterface extends Remote {
     public ArrayList<String> getMessages(String client) throws RemoteException;
     
     public void getClientsFromHost(ChatInterface host) throws RemoteException;
+    
+    public void setSelectedClient(ChatInterface client) throws RemoteException;
+    
+    public ChatInterface getSelectedClient() throws RemoteException;
 }
