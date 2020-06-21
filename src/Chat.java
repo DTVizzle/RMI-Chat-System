@@ -4,6 +4,8 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.DefaultListModel;
 import javax.swing.JTextArea;
 
@@ -19,15 +21,20 @@ import javax.swing.JTextArea;
 public class Chat extends UnicastRemoteObject implements ChatInterface {
 
     public String name;
+    private int vectorStamp;
+    public int[] snapshot;
     private Map<ChatInterface, ArrayList<String>> connectedClients;
     private JTextArea messageArea;
     private DefaultListModel clientsModel;
 
     public Chat() throws RemoteException {
-        this("", null, null);
+        this("", null, null, 0);
     }
 
-    public Chat(String name, JTextArea messageArea, DefaultListModel clientsModel) throws RemoteException {
+    public Chat(String name, JTextArea messageArea, DefaultListModel clientsModel, int arrayPosition) throws RemoteException {
+        this.vectorStamp = arrayPosition;
+        this.snapshot = new int[]{0, 0, 0, 0};
+
         this.name = name;
         this.messageArea = messageArea;
         this.clientsModel = clientsModel;
@@ -41,15 +48,26 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
 
     @Override
     public void send(ChatInterface sender, String msg) throws RemoteException {
+
+        sender.incrementSnapshot(sender.getVector());
+        this.snapshot[vectorStamp]++;
+        int[] tempArray = sender.getSnapshot();
+
+        for (int i = 0; i < snapshot.length; i++) {
+            if (snapshot[i] < tempArray[i]) {
+                snapshot[i] = tempArray[i];
+            }
+        }
+
         msg = sender.getName() + msg;
         if (messageArea == null) {
             System.out.println(msg);
         } else {
             messageArea.append(msg);
         }
-        if (sender != null) {
-            connectedClients.get(sender).add(msg);
-        }
+        connectedClients.get(sender).add(msg);
+        sender.addClient(sender);
+
     }
 
     @Override
@@ -112,5 +130,26 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
             }
         }
         return null;
+    }
+
+    @Override
+    public void clientQuitting() throws RemoteException {
+        this.connectedClients.remove(ref, name);
+    }
+
+    @Override
+    public int getVector() throws RemoteException {
+        return this.vectorStamp; //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public int[] getSnapshot() throws RemoteException {
+        return this.snapshot;
+    }
+
+    @Override
+    public void incrementSnapshot(int vector) throws RemoteException {
+        this.snapshot[vector]++;
+
     }
 }
