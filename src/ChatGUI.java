@@ -9,8 +9,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.rmi.AccessException;
-import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -188,18 +186,26 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
 
             Registry registry;
             try {
+                //get list of all running processes
                 registry = LocateRegistry.getRegistry("localhost", Integer.parseInt("1099"));
                 String[] processes = registry.list();
+                
+                //build and print system snapshot
                 System.out.println("\n\nSYSTEM SNAPSHOT\n********************");
+                
+                //get each instance of running chats
                 for (int i = 0; i < processes.length; i++) {
-
+                    
                     ChatInterface c = (ChatInterface) registry.lookup(processes[i]);
-
+                    
+                    //print each one's vector timestamp
                     System.out.println("[" + processes[i] + "]'s KNOWN VECTORS: " + Arrays.toString(c.getSnapshot()));
 
                     System.out.println("[" + processes[i] + "]'s RECEIVED MESSAGES: ");
+                    //for each recorded interaction of this process with other processes
                     for (int j = 0; j < processes.length; j++) {
                         System.out.println("Process[" + processes[j] + "] said: ");
+                         //if not null, print all received messages
                         if (c.getMessages(processes[j]) != null) {
                             ArrayList<String> messages = c.getMessages(processes[j]);
                             if (!messages.toString().equalsIgnoreCase("[]")) {
@@ -224,56 +230,75 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
                 String msg = ": " + messageField.getText() + "\n";
                 messageField.setText("");
                 messageArea.append("You" + msg);
-              
+
                 ChatInterface c = chatClient.getSelectedClient();
                 c.send(chatClient, msg);
             } catch (RemoteException ex) {
                 Logger.getLogger(ChatGUI.class.getName()).log(Level.SEVERE, null, ex);
             }
-        } else if (src == bullyBttn) {
+        } 
+        // this method gets the ID of the process that requested the election and passes it to the BullyElection class
+        else if (src == bullyBttn) { 
             try {
+                //gets all running processes
                 Registry registry = LocateRegistry.getRegistry("localhost", Integer.parseInt("1099"));
                 String[] processes = registry.list();
                 int electionRequester = 0;
+                
+                //if there is more than one process in the system
+                //finds the requester's ID using its name to search for its position in the list of running processes
                 if (processes.length > 1) {
                     for (int i = 0; i < processes.length; i++) {
                         if (processes[i].equalsIgnoreCase(chatClient.getName())) {
                             electionRequester = i;
                         }
                     }
-                    BullyElection newElection = new BullyElection(electionRequester, processes.length);
-                    displayMessage("Election Results", "Leader is process "+ processes[newElection.getElected()]);
                     
-                } else {
+                    //run the election and output the results
+                    BullyElection newElection = new BullyElection(electionRequester, processes.length);
+                    displayMessage("Election Results", "Leader is process " + processes[newElection.getElected()]);
+                    
+                } 
+                //else there are not enough ptocesses to hold the election
+                else {
                     displayMessage("Election error!", "Not enough clients to hold an election!");
                 }
             } catch (RemoteException ex) {
                 Logger.getLogger(ChatGUI.class.getName()).log(Level.SEVERE, null, ex);
-//            } catch (NotBoundException ex) {
-//                Logger.getLogger(ChatGUI.class.getName()).log(Level.SEVERE, null, ex);
-//            }
-        }}
+            }
+        }
     }
 
     private void startClient(String url, String port, String name) throws RemoteException, NotBoundException {
-        chatClient = new Chat(name, messageArea, clientsModel);
-
+        
         registry = null;
+        //get list of all running processes
         Registry registry = LocateRegistry.getRegistry(url, Integer.parseInt(port));
         String[] position = registry.list();
-
+        
+        //create new chatClient with its position in the array
         chatClient = new Chat(name, messageArea, clientsModel, position.length);
+        
+        //check there are no more than four processes, otherwise close the window
         if (position.length < 5) {
+            //if this is the first process, bind to the registry
             if (position.length == 0) {
                 registry.rebind(name, chatClient);
-//            chatClient.addClient(chatClient);
-            } else {
+            } 
+            //else get an instance of the first process (the de-facto host)
+            else {
                 ChatInterface host = (ChatInterface) registry.lookup(position[0]);
+                //add client to the registry
                 registry.rebind(chatClient.getName(), chatClient);
+                
+                //add the host process to its list of current processes
                 chatClient.addClient(host);
+                
+                //get any other running clients from hosts details
                 chatClient.getClientsFromHost(host);
+                
+                //add itself to the host's details
                 host.addClient(chatClient);
-//            chatClient.send(host, "[" + chatClient.getName() + "] successfully connected\n");
             }
 
             System.out.println("Client is Ready!");
@@ -284,17 +309,6 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
         }
     }
 
-//    private void startHost(String name, String port) throws RemoteException, NotBoundException {
-//        chatClient = new Chat(name, messageArea, clientsModel);
-//
-////        UnicastRemoteObject.unexportObject(host, true);
-////        ChatInterface stub = (ChatInterface) UnicastRemoteObject.exportObject(host, 0);
-////         get the registry which is running on the default port 1099
-//        Registry registry = LocateRegistry.getRegistry(Integer.parseInt(port));
-//        registry.rebind("chat", chatClient);//binds if not already
-//
-//        finishSetup(name);
-//    }
     private void finishSetup(String name) throws RemoteException {
         frame.setTitle(name + "'s " + TITLE);
         urlField.setEditable(false);
@@ -314,7 +328,6 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
             recipient = (String) clients.getSelectedValue();
             if (recipient != null) {
                 messageField.setEnabled(true);
-//            sendBttn.setEnabled(false);
             } else {
                 sendBttn.setEnabled(false);
                 messageField.setEnabled(false);
@@ -339,14 +352,6 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
             Logger.getLogger(ChatGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
-//    public void startElection() throws RemoteException {
-//        Registry registry = LocateRegistry.getRegistry("localhost", Integer.parseInt("1099"));
-//        String[] clientName = registry.list();
-//        if (clientName.length > 0) {
-//             registry.rebind("chat", );
-//        }
-//    }
 
     public static void main(String[] args) {
         ChatGUI chatGUI = new ChatGUI();

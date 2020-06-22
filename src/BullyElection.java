@@ -7,7 +7,7 @@ import java.util.Random;
  * and open the template in the editor.
  */
 /**
- *
+ * This class is used to hold a bully leader election
  * @author AdrianF
  */
 public class BullyElection {
@@ -17,21 +17,25 @@ public class BullyElection {
     private int leader;
     private final int[] STATUS, PRIORITY;
 
+    //constructor takes in the ID of the requesting process and the total number of processes in the system
     public BullyElection(int requesterID, int totalProcesses) {
         this.TOTAL_PROCESSES = totalProcesses;
 
         Random rand = new Random();
-
+        
+        //make sure requester ID is not zero
         this.REQUESTER_ID = requesterID + 1;
 
         this.STATUS = new int[totalProcesses];
         this.PRIORITY = new int[totalProcesses];
 
+        //assign random statuses and priorities to the processes
         for (int i = 0; i < this.TOTAL_PROCESSES; i++) {
             STATUS[i] = rand.nextInt(2) + 1;
             PRIORITY[i] = rand.nextInt(2) + 1;
         }
-
+        
+        //start recursive election method
         elect(this.REQUESTER_ID);
     }
 
@@ -47,6 +51,7 @@ public class BullyElection {
         }
     }
 
+    //get the leader 
     public int getElected() {
         return (this.leader-1);
     }

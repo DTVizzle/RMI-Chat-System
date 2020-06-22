@@ -4,8 +4,6 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.DefaultListModel;
 import javax.swing.JTextArea;
 
@@ -50,17 +48,23 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
 
     @Override
     public void send(ChatInterface sender, String msg) throws RemoteException {
-
+        //increment the sender's vector
         sender.incrementSnapshot(sender.getVector());
+        
+        //increment this instance's vector
         this.snapshot[vectorStamp]++;
+        
+        //get sender's vector timestamp
         int[] tempArray = sender.getSnapshot();
-
+        
+        //keep whichever values are greater between the two
         for (int i = 0; i < snapshot.length; i++) {
             if (snapshot[i] < tempArray[i]) {
                 snapshot[i] = tempArray[i];
             }
         }
-
+        
+        //add the message to this instances messageArea
         msg = sender.getName() + msg;
         if (messageArea == null) {
             System.out.println(msg);
@@ -69,8 +73,9 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
                 messageArea.append(msg);
             }
         }
+        
+        //add to list of received messages
         connectedClients.get(sender).add(msg);
-        sender.addClient(sender);
 
     }
 
@@ -143,7 +148,7 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
 
     @Override
     public int getVector() throws RemoteException {
-        return this.vectorStamp; //To change body of generated methods, choose Tools | Templates.
+        return this.vectorStamp; 
     }
 
     @Override
