@@ -256,7 +256,7 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
     }
 
     private void startClient(String url, String port, String name) throws RemoteException, NotBoundException {
-        chatClient = new Chat(name, messageArea, clientsModel);
+//        chatClient = new Chat(name, messageArea, clientsModel);
 
         registry = null;
         Registry registry = LocateRegistry.getRegistry(url, Integer.parseInt(port));

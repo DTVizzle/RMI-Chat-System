@@ -70,7 +70,7 @@ public class Chat extends UnicastRemoteObject implements ChatInterface {
             }
         }
         connectedClients.get(sender).add(msg);
-        sender.addClient(sender);
+//        sender.addClient(sender);
 
     }
 
