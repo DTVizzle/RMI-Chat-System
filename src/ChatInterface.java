@@ -43,4 +43,8 @@ public interface ChatInterface extends Remote {
     public int getVector() throws RemoteException;
     
     public void incrementSnapshot (int vector) throws RemoteException;
+    
+    public void setSelectedClient(ChatInterface client) throws RemoteException;
+    
+    public ChatInterface getSelectedClient() throws RemoteException;
 }

@@ -10,6 +10,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.rmi.AccessException;
+import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -58,6 +59,8 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
     private JTextField messageField;
     private DefaultListModel clientsModel;
     private JList clients;
+
+    private static Registry registry;
 
     public ChatGUI() {
         super(new BorderLayout());
@@ -221,8 +224,8 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
                 String msg = ": " + messageField.getText() + "\n";
                 messageField.setText("");
                 messageArea.append("You" + msg);
-
-                ChatInterface c = chatClient.getClient(recipient);
+              
+                ChatInterface c = chatClient.getSelectedClient();
                 c.send(chatClient, msg);
             } catch (RemoteException ex) {
                 Logger.getLogger(ChatGUI.class.getName()).log(Level.SEVERE, null, ex);
@@ -253,6 +256,9 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
     }
 
     private void startClient(String url, String port, String name) throws RemoteException, NotBoundException {
+        chatClient = new Chat(name, messageArea, clientsModel);
+
+        registry = null;
         Registry registry = LocateRegistry.getRegistry(url, Integer.parseInt(port));
         String[] position = registry.list();
 
@@ -262,7 +268,6 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
                 registry.rebind(name, chatClient);
 //            chatClient.addClient(chatClient);
             } else {
-
                 ChatInterface host = (ChatInterface) registry.lookup(position[0]);
                 registry.rebind(chatClient.getName(), chatClient);
                 chatClient.addClient(host);
@@ -305,18 +310,20 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
 
     @Override
     public void valueChanged(ListSelectionEvent e) {
-        recipient = (String) clients.getSelectedValue();
-        if (recipient != null) {
-            messageField.setEnabled(true);
-//            sendBttn.setEnabled(false);
-        } else {
-            sendBttn.setEnabled(false);
-            messageField.setEnabled(false);
-        }
-        messageArea.setText("");
-
-        ArrayList<String> messages;
         try {
+            recipient = (String) clients.getSelectedValue();
+            if (recipient != null) {
+                messageField.setEnabled(true);
+//            sendBttn.setEnabled(false);
+            } else {
+                sendBttn.setEnabled(false);
+                messageField.setEnabled(false);
+            }
+            messageArea.setText("");
+
+            chatClient.setSelectedClient(chatClient.getClient(recipient));
+
+            ArrayList<String> messages;
             if (chatClient == null) {
                 messages = chatClient.getMessages(recipient);
             } else {
@@ -340,6 +347,7 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
 //             registry.rebind("chat", );
 //        }
 //    }
+
     public static void main(String[] args) {
         ChatGUI chatGUI = new ChatGUI();
 
@@ -357,7 +365,13 @@ public class ChatGUI extends JPanel implements ActionListener, ListSelectionList
         frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-//                chatGUI.
+                if (registry != null) {
+                    try {
+                        registry.unbind("chat");
+                    } catch (RemoteException | NotBoundException ex) {
+                        Logger.getLogger(ChatGUI.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
             }
         });
     }
