@@ -12,35 +12,35 @@ import java.util.Random;
  */
 public class BullyElection {
 
-    public final int totalProcesses;
-    public final int requesterID;
+    public final int TOTAL_PROCESSES;
+    public final int REQUESTER_ID;
     private int leader;
-    private final int[] status, priority;
+    private final int[] STATUS, PRIORITY;
 
     public BullyElection(int requesterID, int totalProcesses) {
-        this.totalProcesses = totalProcesses;
+        this.TOTAL_PROCESSES = totalProcesses;
 
         Random rand = new Random();
 
-        this.requesterID = requesterID + 1;
+        this.REQUESTER_ID = requesterID + 1;
 
-        this.status = new int[totalProcesses];
-        this.priority = new int[totalProcesses];
+        this.STATUS = new int[totalProcesses];
+        this.PRIORITY = new int[totalProcesses];
 
-        for (int i = 0; i < this.totalProcesses; i++) {
-            status[i] = rand.nextInt(2) + 1;
-            priority[i] = rand.nextInt(2) + 1;
+        for (int i = 0; i < this.TOTAL_PROCESSES; i++) {
+            STATUS[i] = rand.nextInt(2) + 1;
+            PRIORITY[i] = rand.nextInt(2) + 1;
         }
 
-        elect(this.requesterID);
+        elect(this.REQUESTER_ID);
     }
 
     public void elect(int starter) {
         starter = starter - 1;
         this.leader = starter + 1;
-        for (int i = 0; i < this.totalProcesses; i++) {
-            if (this.priority[starter] < this.priority[i]) {
-                if (this.status[i] == 1) {
+        for (int i = 0; i < this.TOTAL_PROCESSES; i++) {
+            if (this.PRIORITY[starter] < this.PRIORITY[i]) {
+                if (this.STATUS[i] == 1) {
                     elect(i + 1);
                 }
             }
